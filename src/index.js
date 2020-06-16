@@ -2,14 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-class Header extends React.Component {
-    constructor (props) {
+class Main extends React.Component {
+    constructor(props) {
         super(props);
         this.state = {
             menu: props.menu,
             selected: null
-        };
+        }
         this.selectMenu = this.selectMenu.bind(this);
+        this.getSelectedElement = this.getSelectedElement.bind(this);
     }
 
     selectMenu(e) {
@@ -22,10 +23,33 @@ class Header extends React.Component {
         });
     }
 
+    getSelectedElement() {
+        if (!this.state.selected) {
+            return null;
+        }
+        const currentId = this.state.selected.id
+        let i = 0;
+        console.log(this.state.menu[i].name);
+        while (this.state.menu[i].name !== currentId) {
+            i++
+        }
+        return this.state.menu[i].element;
+    }
+
+    render() {
+        console.log(this.getSelectedElement());
+        return (
+            <Header menu={this.state.menu} onClick={this.selectMenu} />
+        )
+    }
+}
+
+
+class Header extends React.Component {
     render() {
         return (
             <div id="header">
-                <Menu items={this.state.menu} onClick={this.selectMenu} />
+                <Menu items={this.props.menu} onClick={this.props.onClick} />
             </div>
         )
     }
@@ -77,7 +101,7 @@ class C extends React.Component {
 const Interface = {
     windowsList: [],
     index: 0,
-    push: function(element, name) {
+    push: function(name, element) {
         this.windowsList.push({
             id: this.index,
             name: name,
@@ -92,7 +116,7 @@ Interface.push('b',<B />);
 Interface.push('c',<C />);
 
 
-const domElement = <Header menu={Interface.windowsList}/>
+const domElement = <Main menu={Interface.windowsList}/>
 
 ReactDOM.render(
     domElement,
