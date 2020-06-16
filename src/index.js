@@ -2,64 +2,99 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-class Main extends React.Component {
-    constructor(props) {
+class Header extends React.Component {
+    constructor (props) {
         super(props);
         this.state = {
-            windows: ['a'],
+            menu: props.menu,
+            selected: null
+        };
+        this.selectMenu = this.selectMenu.bind(this);
+    }
+
+    selectMenu(e) {
+        if (this.state.selected) {
+            this.state.selected.classList.remove('selected');
         }
-        this.state.current  = this.state.windows[0];
+        e.currentTarget.classList.add('selected');
+        this.setState({
+            selected: e.currentTarget
+        });
     }
 
     render() {
         return (
-            <>
-                <Header options={this.state.windows}/>
-                <Window className={this.state.windows[0]} />
-                <Footer />
-            </>
-        )
-    }
-}
-
-class Header extends React.Component {
-    render() {
-        const listItems = this.props.options.map((window) =>
-            <li key={window}>{window}</li>);
-
-        return(
-            <div className="header">
-                <ul>{listItems}</ul>
+            <div id="header">
+                <Menu items={this.state.menu} onClick={this.selectMenu} />
             </div>
         )
     }
 }
 
-class Footer extends React.Component {
+function Menu(props) {
+    const items = props.items.map(item =>
+        <li id={item.name} className="item" onClick={props.onClick} key={item.id}>{item.name}</li>
+    );
+
+    return (
+        <ul className="menu">{items}</ul>
+    )
+}
+
+class Contents extends React.Component {
     render() {
         return(
-            <div className="footer">
-                footer
-            </div>
+            <></>
         )
     }
 }
 
-class Window extends React.Component {
+class A extends React.Component {
     render() {
-        return (
-            <div 
-                className={this.props.className}
-            >
-                {this.props.className}
-            </div>
+        return(
+            <div>a</div>
+        )
+    }
+}
+
+class B extends React.Component {
+    render() {
+        return(
+            <div>b</div>
+        )
+    }
+}
+
+class C extends React.Component {
+    render() {
+        return(
+            <div>c</div>
         )
     }
 }
 
 
+const Interface = {
+    windowsList: [],
+    index: 0,
+    push: function(element, name) {
+        this.windowsList.push({
+            id: this.index,
+            name: name,
+            element: element,
+        });
+        this.index++;
+    }
+}
+
+Interface.push('a',<A />);
+Interface.push('b',<B />);
+Interface.push('c',<C />);
+
+
+const domElement = <Header menu={Interface.windowsList}/>
 
 ReactDOM.render(
-    <Main />,
+    domElement,
     document.getElementById('root')
 )
