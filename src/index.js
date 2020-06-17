@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import Test from './pages/test.js'
+import Clock from './pages/clock.js'
 
 class Main extends React.Component {
     constructor(props) {
@@ -10,36 +12,37 @@ class Main extends React.Component {
             selected: null
         }
         this.selectMenu = this.selectMenu.bind(this);
-        this.getSelectedElement = this.getSelectedElement.bind(this);
+        this.getSelected = this.getSelected.bind(this);
     }
 
     selectMenu(e) {
+        // 같은 메뉴를 클릭하더라도, 새로고침 하려는 의도일 수 있으므로 무시하지 않음
         if (this.state.selected) {
-            this.state.selected.classList.remove('selected');
+            document.getElementById(this.state.selected.id).classList.remove('selected');
         }
+        const selectedId = e.currentTarget.id;
+        const selectedItem = this.getSelected(selectedId);
+
         e.currentTarget.classList.add('selected');
         this.setState({
-            selected: e.currentTarget
+            selected: selectedItem,
         });
     }
 
-    getSelectedElement() {
-        if (!this.state.selected) {
-            return null;
-        }
-        const currentId = this.state.selected.id
+    getSelected(id) {
         let i = 0;
-        console.log(this.state.menu[i].name);
-        while (this.state.menu[i].name !== currentId) {
+        while (this.state.menu[i].id !== id) {
             i++
         }
-        return this.state.menu[i].element;
+        return this.state.menu[i];
     }
 
     render() {
-        console.log(this.getSelectedElement());
         return (
-            <Header menu={this.state.menu} onClick={this.selectMenu} />
+            <>
+                <Header menu={this.state.menu} onClick={this.selectMenu} />
+                <Contents contents={this.state.selected} />
+            </>
         )
     }
 }
@@ -57,7 +60,7 @@ class Header extends React.Component {
 
 function Menu(props) {
     const items = props.items.map(item =>
-        <li id={item.name} className="item" onClick={props.onClick} key={item.id}>{item.name}</li>
+        <li id={item.id} className="item" onClick={props.onClick} key={item.key}>{item.name}</li>
     );
 
     return (
@@ -67,33 +70,12 @@ function Menu(props) {
 
 class Contents extends React.Component {
     render() {
+        if (!this.props.contents) {
+            return null;
+        }
         return(
-            <></>
-        )
-    }
-}
-
-class A extends React.Component {
-    render() {
-        return(
-            <div>a</div>
-        )
-    }
-}
-
-class B extends React.Component {
-    render() {
-        return(
-            <div>b</div>
-        )
-    }
-}
-
-class C extends React.Component {
-    render() {
-        return(
-            <div>c</div>
-        )
+            this.props.contents.element
+        );
     }
 }
 
@@ -101,9 +83,10 @@ class C extends React.Component {
 const Interface = {
     windowsList: [],
     index: 0,
-    push: function(name, element) {
+    push: function(id, name, element) {
         this.windowsList.push({
-            id: this.index,
+            key: this.index,
+            id: id,
             name: name,
             element: element,
         });
@@ -111,10 +94,8 @@ const Interface = {
     }
 }
 
-Interface.push('a',<A />);
-Interface.push('b',<B />);
-Interface.push('c',<C />);
-
+Interface.push(Test.id, Test.name, Test.element);
+Interface.push(Clock.id, Clock.name, Clock.element);
 
 const domElement = <Main menu={Interface.windowsList}/>
 
