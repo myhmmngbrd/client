@@ -1,0 +1,29 @@
+.DSA {
+    position: relative;
+    top:100px;
+    left:100px;
+    display:block;
+}
+
+ul.DSA-items {
+    display:flex;
+    flex-wrap: nowrap;
+    user-select: none;
+    margin:0;
+    padding:0;
+    list-style-type: none;  
+    align-items: bottom;
+    justify-content: bottom;
+}
+
+ul.DSA-items li {
+    width:30px;
+    text-align: center;
+}
+
+ul.DSA-items li.DSA-bar {
+    background-color: green;
+    width:16px;
+    margin:0 7px 0 7px;
+    align-self: flex-end;
+}

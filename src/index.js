@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import Test from './pages/test.js'
 import Clock from './pages/clock.js'
+import DSA from './pages/DSA.js'
 
 class Main extends React.Component {
     constructor(props) {
@@ -96,6 +97,7 @@ const Interface = {
 
 Interface.push(Test.id, Test.name, Test.element);
 Interface.push(Clock.id, Clock.name, Clock.element);
+Interface.push(DSA.id, DSA.name, DSA.element);
 
 const domElement = <Main menu={Interface.windowsList}/>
 
