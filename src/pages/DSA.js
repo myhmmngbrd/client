@@ -7,13 +7,21 @@ class Table extends React.Component {
         super(props);
         this.state = {
             values: props.values,
-            selected: null,
-            compared: null,
-            key:null,
+            selected: [],
+            compared: [],
+            chosen: [],
+            key:[],
         }
+        this.sortState = [];
         this.selectionSort = this.selectionSort.bind(this);
         this.InsertionSort = this.InsertionSort.bind(this);
         this.bubbleSort = this.bubbleSort.bind(this);
+        this.shellSort = this.shellSort.bind(this);
+        this.mergeSort = this.mergeSort.bind(this);
+    }
+
+    update() {
+        this.sortState.push()
     }
 
     swap(ary, a1, a2, key=1) {
@@ -27,28 +35,17 @@ class Table extends React.Component {
         });
         this.setState({
             values: values,
-            selected: a2,
-            compared: key ? null: a1,
-            key: key ? a1: null,
+            selected: [a2],
+            compared: key ? []: [a1],
+            key: key ? [a1]: [],
         });
     }
     
-    insert(ary, a1, a2) {
+    insert(ary, a1, a2, gap=1, chosen=[]) {
         //insert a1 to a2
         const tmp = ary[a1];
-        if (a1 > a2) {
-        // right to left
-            for (let i = a1; i>a2; i--) {
-                ary[i] = ary[i-1];
-            }
-        } else if (a2 > a1) {
-        // left to right
-            for (let i = a1; i<a2; i++) {
-                ary[i] = ary[i+1];
-            }
-        } else {
-        // same index
-            return;
+        for (let i = a1; i>a2; i = i - gap) {
+            ary[i] = ary[i-gap];
         }
         ary[a2] = tmp;
         const values = ary.map((value,index) => {
@@ -59,19 +56,27 @@ class Table extends React.Component {
         });
         this.setState({
             values: values,
-            selected: a2,
-            compared: null,
-            key: null,
+            selected: [a2],
+            compared: [],
+            chosen:chosen,
+            key: [a1],
         });
     }
     
     clear(interval) {
         clearInterval(interval);
         this.setState({
-            selected:null,
-            compared:null,
-            key:null,
+            selected:[],
+            compared:[],
+            key:[],
         });
+    }
+
+    power(x, n) {
+        for (let i=0; i<n; i++) {
+            x *= x;
+        }
+        return x;
     }
 
     selectionSort() {
@@ -83,9 +88,9 @@ class Table extends React.Component {
                 j++
                 if (ary[j] < ary[min]) min = j;
                 this.setState({
-                    selected: i,
-                    compared: j,
-                    key: min,
+                    selected: [i],
+                    compared: [j],
+                    key: [min],
                 });
             } else if(i < ary.length-1) {
                 this.swap(ary,i,min);
@@ -96,7 +101,7 @@ class Table extends React.Component {
                 this.clear(this.sort);
                 return;
             }
-        }, 200);
+        }, 100);
     }
 
     InsertionSort() {
@@ -104,13 +109,13 @@ class Table extends React.Component {
         let [i, j, index] = [1,1,1];
 
         this.sort = setInterval(() => {
-            j--
+            j--;
             if (ary[i] < ary[j]) {
                 index = j;
                 this.setState({
-                    selected:i,
-                    compared:j,
-                    key:index,
+                    selected:[i],
+                    compared:[j],
+                    key:[index],
                 });
             } else {
                 this.insert(ary,i,index);
@@ -121,7 +126,7 @@ class Table extends React.Component {
                 j = i;
                 index = i;
             }
-        }, 200);
+        }, 100);
     }
 
     bubbleSort() {
@@ -134,8 +139,8 @@ class Table extends React.Component {
                     if (!this.change) {
                         this.change = 1;
                         this.setState({
-                            selected: i,
-                            compared: i+1,
+                            selected: [i],
+                            compared: [i+1],
                         })
                         return;
                     }
@@ -143,8 +148,8 @@ class Table extends React.Component {
                     this.change=0;
                 } else {
                     this.setState({
-                        selected: i,
-                        compared: i+1,
+                        selected: [i],
+                        compared: [i+1],
                     })
                 }
                 i++;
@@ -154,14 +159,81 @@ class Table extends React.Component {
             } else {
                 this.clear(this.sort);
             }
+        }, 100);
+    }
+
+    shellSort() {
+        const ary = this.state.values.map(v => v.value);
+        let gap = Math.floor(ary.length/2);
+        gap = gap % 2 ? gap : gap + 1;
+        let n=0;
+        let [i,j,index] = [1,1,1];
+        this.sort = setInterval(() => {
+            let chosen = [];
+            for (let k=n; k<ary.length; k = k+gap) {
+                chosen.push(k);
+            }
+            j--
+            if (ary[i * gap + n] && (ary[i * gap + n] < ary[j * gap + n])) {
+                index = j;
+                this.setState({
+                    selected: [i * gap + n],
+                    compared: [j * gap + n],
+                    chosen: chosen,
+                    key: [index * gap + n],
+                })
+            } else {
+                if (index < i) {
+                    //인덱스가 i보다 작다면 삽입
+                    this.insert(ary,i * gap + n, index * gap + n, gap, chosen);   
+                } else {
+                    //인덱스가 i라면 그냥 갱신만
+                    this.setState({
+                        selected: [i * gap + n],
+                        compared: [j * gap + n],
+                        chosen: chosen,
+                        key: [index * gap + n],
+                    });
+                }
+
+                if ((++i * gap + n) >= ary.length) {
+                    if (++n === gap) {
+                        if (gap !== 1) {
+                            gap = Math.floor(gap/2);
+                            gap = gap % 2 ? gap : gap + 1;
+                            n = 0;
+                        } else {
+                            this.clear(this.sort);
+                            return;
+                        }
+                    }
+                    i = 1;
+                }
+                j = i;
+                index = i;
+            }
+            
         }, 200);
     }
 
-
+    mergeSort() {
+        const ary = this.state.values.map(v => v.value);
+        console.log(ary);
+        for (let i=0; i<ary.length-1; i++) {
+            let min = i;
+            for (let j=i+1; j<ary.length; j++) {
+                if (ary[j] < ary[min]) min = j;
+            }
+            let tmp = ary[i];
+            ary[i] = ary[min];
+            ary[min] = tmp;
+        }
+        console.log(ary);
+    }
 
     componentWillUnmount() {
-        if (this.select)
-            clearInterval(this.select);
+        if (this.sort)
+            clearInterval(this.sort);
     }
 
 
@@ -174,6 +246,7 @@ class Table extends React.Component {
                         selected={this.state.selected} 
                         compared={this.state.compared} 
                         keyVal={this.state.key}
+                        chosen={this.state.chosen}
                     />
                 </ul>
                 <ul className="DSA-items">
@@ -184,28 +257,31 @@ class Table extends React.Component {
                 <button onClick={this.selectionSort}>Selection sort</button>
                 <button onClick={this.InsertionSort}>Insertion sort</button>
                 <button onClick={this.bubbleSort}>Bubble sort</button>
+                <button onClick={this.shellSort}>Shell sort</button>
+                <button onClick={this.mergeSort}>Merge sort</button>
             </div>
         )
     }
 }
 
 function Bars(props) {
-    const output = props.values.map(val =>
-        <li 
-            className="DSA-bar"
-            key={val.key} 
-            style={{
-                height: val.value*2 + 'px',
-                backgroundColor: (
-                    props.selected === val.key ?
-                        'black':
-                        props.compared === val.key ?
-                            'red' :
-                            props.keyVal === val.key ?
-                                'blue' : ''
-                )
-            }}
-        ></li>
+    const output = props.values.map(val => {
+        let color = props.selected.indexOf(val.key) > -1 ?
+            'black' : props.compared.indexOf(val.key) > -1 ?
+            'red' : props.keyVal.indexOf(val.key) > -1 ?
+            'blue' : props.chosen.indexOf(val.key) > -1 ?
+            'orange' : '';
+        return (
+            <li 
+                className="DSA-bar"
+                key={val.key} 
+                style={{
+                    height: val.value*2 + 'px',
+                    backgroundColor: color,
+                }}
+            ></li>
+            )
+        }
     )
     return output
 }
