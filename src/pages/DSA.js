@@ -13,6 +13,8 @@ class Table extends React.Component {
             key:[],
         }
         this.sortState = [];
+        this.pushState = this.pushState.bind(this);
+        this.updateState = this.updateState.bind(this);
         this.selectionSort = this.selectionSort.bind(this);
         this.InsertionSort = this.InsertionSort.bind(this);
         this.bubbleSort = this.bubbleSort.bind(this);
@@ -20,8 +22,29 @@ class Table extends React.Component {
         this.mergeSort = this.mergeSort.bind(this);
     }
 
-    update() {
-        this.sortState.push()
+    pushState(ary, selected = [], compared = [], chosen = [], key = []) {
+        this.sortState.push({
+            values: ary.map((v,i) => {return { value:v, key:i } }),
+            selected: selected,
+            compared: compared,
+            chosen: chosen,
+            keyVal:  key,
+        })
+    }
+
+    updateState() {
+        console.log(this.sortState.length);
+        let i = 0;
+        this.view = setInterval(() => {
+            this.setState({
+                values: this.sortState[i].values,
+                selected: this.sortState[i].selected,
+                compared: this.sortState[i].compared,
+                chosen: this.sortState[i].chosen,
+                key: this.sortState[i].keyVal,
+            });
+            if (++i >= this.sortState.length) this.clear(this.view);
+        }, 100);
     }
 
     swap(ary, a1, a2, key=1) {
@@ -70,6 +93,7 @@ class Table extends React.Component {
             compared:[],
             key:[],
         });
+        this.sortState = [];
     }
 
     power(x, n) {
@@ -81,27 +105,18 @@ class Table extends React.Component {
 
     selectionSort() {
         const ary = this.state.values.map(v => v.value);
-        let [min, i, j] = [0,0,0];
-        
-        this.sort = setInterval(() => {
-            if(j < ary.length) {
-                j++
+        for (let i=0; i<ary.length-1; i++) {
+            let min = i;
+            for (let j=i+1; j<ary.length; j++) {
                 if (ary[j] < ary[min]) min = j;
-                this.setState({
-                    selected: [i],
-                    compared: [j],
-                    key: [min],
-                });
-            } else if(i < ary.length-1) {
-                this.swap(ary,i,min);
-                i++
-                min = i;
-                j = i;
-            } else {
-                this.clear(this.sort);
-                return;
+                this.pushState(ary,[i],[j],[],[min]);
             }
-        }, 100);
+            let tmp = ary[i];
+            ary[i] = ary[min];
+            ary[min] = tmp;
+            this.pushState(ary,[i],[],[],[min]);
+        }
+        this.updateState();
     }
 
     InsertionSort() {
@@ -219,14 +234,21 @@ class Table extends React.Component {
     mergeSort() {
         const ary = this.state.values.map(v => v.value);
         console.log(ary);
-        for (let i=0; i<ary.length-1; i++) {
-            let min = i;
-            for (let j=i+1; j<ary.length; j++) {
-                if (ary[j] < ary[min]) min = j;
+        for (let i=1; i<ary.length; i++) {
+            let index = i;
+            for (let j = i-1; j>=0; j--) {
+                if (ary[j] > ary[i]) {
+                    index = j
+                    console.log(index);
+                } else {
+                    break;
+                }
             }
             let tmp = ary[i];
-            ary[i] = ary[min];
-            ary[min] = tmp;
+            for (let k=i; k>index; k--) {
+                ary[k] = ary[k-1];
+            }
+            ary[index] = tmp;
         }
         console.log(ary);
     }
@@ -234,6 +256,8 @@ class Table extends React.Component {
     componentWillUnmount() {
         if (this.sort)
             clearInterval(this.sort);
+        if (this.view) 
+            clearInterval(this.view);
     }
 
 
