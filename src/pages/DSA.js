@@ -114,67 +114,49 @@ class Table extends React.Component {
             let tmp = ary[i];
             ary[i] = ary[min];
             ary[min] = tmp;
-            this.pushState(ary,[i],[],[],[min]);
+            this.pushState(ary,[min],[],[],[i]);
         }
         this.updateState();
     }
 
     InsertionSort() {
         const ary = this.state.values.map(v => v.value);
-        let [i, j, index] = [1,1,1];
-
-        this.sort = setInterval(() => {
-            j--;
-            if (ary[i] < ary[j]) {
-                index = j;
-                this.setState({
-                    selected:[i],
-                    compared:[j],
-                    key:[index],
-                });
-            } else {
-                this.insert(ary,i,index);
-                if (++i === ary.length) {
-                    this.clear(this.sort);
-                    return;
+        for (let i=1; i<ary.length; i++) {
+            let index = i;
+            for (let j = i-1; j>=0; j--) {
+                if (ary[j] > ary[i]) {
+                    index = j;
+                    this.pushState(ary, [i], [j], [], [index]);
+                } else {
+                    break;
                 }
-                j = i;
-                index = i;
             }
-        }, 100);
+            let tmp = ary[i];
+            for (let k=i; k>index; k--) {
+                ary[k] = ary[k-1];
+            }
+            ary[index] = tmp;
+            this.pushState(ary, [index], [], [], [i]);
+        }
+        this.updateState();
     }
 
     bubbleSort() {
         const ary = this.state.values.map(v => v.value);
-        let [i, j] = [0,ary.length-1];
-
-        this.sort = setInterval(() => {
-            if (i < j) {
-                if (ary[i] > ary[i+1]) {
-                    if (!this.change) {
-                        this.change = 1;
-                        this.setState({
-                            selected: [i],
-                            compared: [i+1],
-                        })
-                        return;
-                    }
-                    this.swap(ary,i,i+1,0);
-                    this.change=0;
+        let tmp;
+        for (let i=ary.length-1; i>0; i--) {
+            for (let j=0; j<i; j++) {
+                if (ary[j] > ary[j+1]) {
+                    tmp = ary[j];
+                    ary[j] = ary[j+1];
+                    ary[j+1] = tmp;
+                    this.pushState(ary,[j+1],[j],[],[i]);
                 } else {
-                    this.setState({
-                        selected: [i],
-                        compared: [i+1],
-                    })
+                    this.pushState(ary,[j],[j+1],[],[i]);
                 }
-                i++;
-            } else if (j > 0){
-                j--
-                i=0;
-            } else {
-                this.clear(this.sort);
             }
-        }, 100);
+        }
+        this.updateState();
     }
 
     shellSort() {
@@ -233,22 +215,30 @@ class Table extends React.Component {
 
     mergeSort() {
         const ary = this.state.values.map(v => v.value);
-        console.log(ary);
-        for (let i=1; i<ary.length; i++) {
-            let index = i;
-            for (let j = i-1; j>=0; j--) {
-                if (ary[j] > ary[i]) {
-                    index = j
-                    console.log(index);
-                } else {
-                    break;
+        let gap = Math.floor(ary.length/2);
+        let index, tmp, group;
+        while (gap > 0) {
+            gap = (gap % 2 ? gap : gap + 1);
+            console.log('gap: ' + gap);
+            for (let n=0; n<gap; n++) {
+                console.log('\tn: ' + n);
+                for (let i=n+gap; i<ary.length; i = i + gap) {
+                    index = i;
+                    for (let j=i-gap; j >= n; j = j - gap) {
+                        if (ary[j] > ary[i]) {
+                            index = j;
+                        } else {
+                            break;
+                        }
+                    }
+                    tmp = ary[i];
+                    for (let k = i; k > index; k = k-gap) {
+                        ary[k] = ary[k-gap];
+                    }
+                    ary[index] = tmp;
                 }
             }
-            let tmp = ary[i];
-            for (let k=i; k>index; k--) {
-                ary[k] = ary[k-1];
-            }
-            ary[index] = tmp;
+            gap = Math.floor(gap / 2);
         }
         console.log(ary);
     }
