@@ -20,6 +20,7 @@ class Table extends React.Component {
         this.bubbleSort = this.bubbleSort.bind(this);
         this.shellSort = this.shellSort.bind(this);
         this.mergeSort = this.mergeSort.bind(this);
+        this.quickSort = this.quickSort.bind(this);
     }
 
     pushState(ary, selected = [], compared = [], chosen = [], key = []) {
@@ -44,46 +45,7 @@ class Table extends React.Component {
                 key: this.sortState[i].keyVal,
             });
             if (++i >= this.sortState.length) this.clear(this.view);
-        }, 100);
-    }
-
-    swap(ary, a1, a2, key=1) {
-        // swap a1 with a2
-        [ary[a1], ary[a2]] = [ary[a2], ary[a1]];
-        const values = ary.map((value,index) => {
-            return {
-                value: value,
-                key: index,
-            }
-        });
-        this.setState({
-            values: values,
-            selected: [a2],
-            compared: key ? []: [a1],
-            key: key ? [a1]: [],
-        });
-    }
-    
-    insert(ary, a1, a2, gap=1, chosen=[]) {
-        //insert a1 to a2
-        const tmp = ary[a1];
-        for (let i = a1; i>a2; i = i - gap) {
-            ary[i] = ary[i-gap];
-        }
-        ary[a2] = tmp;
-        const values = ary.map((value,index) => {
-            return {
-                value: value,
-                key: index,
-            }
-        });
-        this.setState({
-            values: values,
-            selected: [a2],
-            compared: [],
-            chosen:chosen,
-            key: [a1],
-        });
+        }, 200);
     }
     
     clear(interval) {
@@ -91,16 +53,10 @@ class Table extends React.Component {
         this.setState({
             selected:[],
             compared:[],
+            chosen: [],
             key:[],
         });
         this.sortState = [];
-    }
-
-    power(x, n) {
-        for (let i=0; i<n; i++) {
-            x *= x;
-        }
-        return x;
     }
 
     selectionSort() {
@@ -162,71 +118,20 @@ class Table extends React.Component {
     shellSort() {
         const ary = this.state.values.map(v => v.value);
         let gap = Math.floor(ary.length/2);
-        gap = gap % 2 ? gap : gap + 1;
-        let n=0;
-        let [i,j,index] = [1,1,1];
-        this.sort = setInterval(() => {
-            let chosen = [];
-            for (let k=n; k<ary.length; k = k+gap) {
-                chosen.push(k);
-            }
-            j--
-            if (ary[i * gap + n] && (ary[i * gap + n] < ary[j * gap + n])) {
-                index = j;
-                this.setState({
-                    selected: [i * gap + n],
-                    compared: [j * gap + n],
-                    chosen: chosen,
-                    key: [index * gap + n],
-                })
-            } else {
-                if (index < i) {
-                    //인덱스가 i보다 작다면 삽입
-                    this.insert(ary,i * gap + n, index * gap + n, gap, chosen);   
-                } else {
-                    //인덱스가 i라면 그냥 갱신만
-                    this.setState({
-                        selected: [i * gap + n],
-                        compared: [j * gap + n],
-                        chosen: chosen,
-                        key: [index * gap + n],
-                    });
-                }
-
-                if ((++i * gap + n) >= ary.length) {
-                    if (++n === gap) {
-                        if (gap !== 1) {
-                            gap = Math.floor(gap/2);
-                            gap = gap % 2 ? gap : gap + 1;
-                            n = 0;
-                        } else {
-                            this.clear(this.sort);
-                            return;
-                        }
-                    }
-                    i = 1;
-                }
-                j = i;
-                index = i;
-            }
-            
-        }, 200);
-    }
-
-    mergeSort() {
-        const ary = this.state.values.map(v => v.value);
-        let gap = Math.floor(ary.length/2);
         let index, tmp, group;
         while (gap > 0) {
             gap = (gap % 2 ? gap : gap + 1);
-            console.log('gap: ' + gap);
             for (let n=0; n<gap; n++) {
-                console.log('\tn: ' + n);
+                group = []
+                for (let m = n; m < ary.length; m = m + gap) {
+                    group.push(m);
+                }
                 for (let i=n+gap; i<ary.length; i = i + gap) {
                     index = i;
                     for (let j=i-gap; j >= n; j = j - gap) {
                         if (ary[j] > ary[i]) {
                             index = j;
+                            this.pushState(ary,[i],[j],group,[index]);
                         } else {
                             break;
                         }
@@ -236,11 +141,111 @@ class Table extends React.Component {
                         ary[k] = ary[k-gap];
                     }
                     ary[index] = tmp;
+                    this.pushState(ary,[index],[],group,[i]);
                 }
             }
             gap = Math.floor(gap / 2);
         }
-        console.log(ary);
+        this.updateState();
+    }
+
+    mergeSort(e, ary, left, right) {
+        if (!ary) {
+            ary = this.state.values.map(v => v.value);
+            console.log(ary);
+            left = 0;
+            right = ary.length-1;
+        }
+        let group = [];
+        for( let i = left; i <= right; i++) {
+            group.push(i);
+        }
+        this.pushState(ary,[],[],group,[]);
+        if (left < right) {
+            let mid = Math.floor((left + right) / 2);
+            this.mergeSort(e, ary, left, mid);
+            this.mergeSort(e, ary, mid+1, right);
+            this.merge(ary, left, mid, right, group);
+        }
+        if ((left === 0) && (right === ary.length-1)) {
+            this.updateState();
+        }
+    }
+
+    merge(ary,left,mid,right, group) {
+        let i,j,k
+        if (!this.sorted) {
+            this.sorted = new Array(ary.length);
+        }
+        i = left;
+        j = mid +1;
+        k = left
+        while (i <= mid && j <= right) {
+            if (ary[i] <= ary[j]) {
+                this.sorted[k++] = ary[i++];
+            } else {
+                this.sorted[k++] = ary[j++];
+            }
+        }
+        if (i > mid) {
+            for (let l = j; l <= right; l++) {
+                this.sorted[k++] = ary[l];
+            }
+        } else {
+            for (let l = i;l <= mid; l++) {
+                this.sorted[k++] = ary[l];
+            }
+        }
+        for (let l = left; l <= right; l++) {
+            ary[l] = this.sorted[l];
+            this.pushState(ary, [l], [], group, []);
+        }
+    }
+
+    quickSort(e, ary, left, right) {
+        if (!ary) {
+            ary = this.state.values.map(v => v.value);
+            left = 0;
+            right = ary.length-1
+        }
+        if (left < right)  {
+            let q = this.partition(ary, left, right);
+            this.quickSort(e, ary, left, q - 1);
+            this.quickSort(e, ary, q + 1, right);
+        }
+        if (left === 0 && right === ary.length-1) {
+            this.updateState();
+        }
+    }
+
+    partition(ary, left, right) {
+        let pivot = ary[left];
+        let l = left, r = right+1;
+        let tmp, group;
+        group = [];
+        for (let i=left; i<=right; i++) {
+            group.push(i);
+        }
+        do {
+            do {
+                l++;
+                this.pushState(ary,[l],[left],group,[r <= right ? r : '']);
+            } while (ary[l] < pivot)
+            do {
+                r--;
+                this.pushState(ary,[r],[left],group,[l]);
+            } while (ary[r] > pivot)
+            if (l < r) {
+                tmp = ary[l];
+                ary[l] = ary[r];
+                ary[r] = tmp;
+                this.pushState(ary,[l],[left],group,[r]);
+            }
+        } while (l < r)
+        ary[left] = ary[r];
+        ary[r] = pivot;
+        this.pushState(ary,[left],[r],group,[]);
+        return r;
     }
 
     componentWillUnmount() {
@@ -273,6 +278,7 @@ class Table extends React.Component {
                 <button onClick={this.bubbleSort}>Bubble sort</button>
                 <button onClick={this.shellSort}>Shell sort</button>
                 <button onClick={this.mergeSort}>Merge sort</button>
+                <button onClick={this.quickSort}>Quick sort</button> 
             </div>
         )
     }
